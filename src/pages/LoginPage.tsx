@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logo from "../assets/logo.png";
 import { mockLogin, type MSUser } from "../services/authService";
 
 interface LoginPageProps {
@@ -71,34 +72,33 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             border: "1px solid rgba(255,255,255,0.08)",
           }}
         >
-          {/* Logo circle */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
-            <div
+          {/* Logo */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "24px",
+            }}
+          >
+            <img
+              src={logo}
+              alt="Varma & Varma"
               style={{
-                width: "88px",
-                height: "88px",
+                width: "92px",
+                height: "92px",
+                objectFit: "contain",
                 borderRadius: "50%",
-                background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 8px 32px rgba(59,130,246,0.4)",
+                boxShadow: "0 10px 30px rgba(59,130,246,0.35)",
+                backgroundColor: "white",
               }}
-            >
-              <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
-                <path d="M12 36 L24 8 L36 36" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 28 L32 28" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                <circle cx="36" cy="12" r="3" fill="white"/>
-              </svg>
-            </div>
+            />
           </div>
-
           {/* Title */}
           <h1 style={{ color: "white", fontSize: "24px", fontWeight: 700, textAlign: "center", marginBottom: "6px" }}>
-            Sign in to Fraudguard
+            Sign in to FraudGuard
           </h1>
           <p style={{ color: "#9ca3af", fontSize: "13px", textAlign: "center", marginBottom: "32px" }}>
-            Audit Intelligence Platform · Varma &amp; Varma
+            Varma &amp; Varma
           </p>
 
           {/* Microsoft button */}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import logo from "./assets/logo.png";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import ProceduresLibrary from "./pages/ProceduresLibrary";
@@ -101,14 +102,17 @@ export default function App() {
       <header className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-5 shrink-0 z-20">
 
         {/* Left: logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full border-2 border-gray-400 flex items-center justify-center">
-            <svg width="10" height="10" fill="none" stroke="#6b7280" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
-          <span className="text-sm font-semibold text-gray-800">FraudGuard</span>
-        </div>
+        <div className="flex items-center gap-3">
+        <img
+          src={logo}
+          alt="Logo"
+          className="w-9 h-9 rounded-full object-cover"
+        />
+
+        <span className="text-sm font-semibold text-gray-800">
+          FraudGuard
+        </span>
+      </div>
 
         {/* Centre: engagement dropdown */}
         <div className="relative" ref={engagementRef}>
