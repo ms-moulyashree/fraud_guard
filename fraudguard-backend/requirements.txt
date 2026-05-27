@@ -1,0 +1,36 @@
+# FraudGuard Backend — Python dependencies
+# Install: pip install -r requirements.txt
+# Docker: handled automatically by Dockerfile
+
+# ── Web framework ─────────────────────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# ── Database ──────────────────────────────────────────────────────────────────
+asyncpg==0.30.0
+
+# ── Data validation ───────────────────────────────────────────────────────────
+pydantic==2.11.7
+pydantic-settings==2.10.1
+
+# ── Groq AI ───────────────────────────────────────────────────────────────────
+groq==0.11.0
+
+# ── OpenAI-compatible SDK (optional/future use) ──────────────────────────────
+openai==1.57.2
+
+# ── Excel export ──────────────────────────────────────────────────────────────
+openpyxl==3.1.5
+
+# ── Auth / security ───────────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+
+# ── HTTP ──────────────────────────────────────────────────────────────────────
+httpx==0.28.1
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dateutil==2.9.0
+
+pandas==2.2.3
