@@ -75,7 +75,9 @@ async function request<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const url = `${BASE_URL}${path}`;
+
+const res = await fetch(url, {
     method,
     headers,
     body: isFormData
@@ -86,18 +88,31 @@ async function request<T>(
   });
 
   // ─── AUTH FAILURE ─────────────────────────────────────────────
-  if (res.status === 401) {
-    // Remove stale token immediately
+if (res.status === 401) {
+
+  console.warn(
+    "401 received for:",
+    path
+  );
+
+  const isAuthEndpoint =
+    path.includes("/auth/");
+
+  // ONLY logout for auth endpoints
+  if (isAuthEndpoint) {
+
     clearToken();
 
-    // Redirect app to login screen
     if (_onUnauthorized) {
       _onUnauthorized();
     }
-
-    // Throw special auth error
-    throw new AuthError("Session expired or unauthorized", 401);
   }
+
+  throw new AuthError(
+    "Session expired or unauthorized",
+    401
+  );
+}
 
   // ─── OTHER ERRORS ─────────────────────────────────────────────
   if (!res.ok) {

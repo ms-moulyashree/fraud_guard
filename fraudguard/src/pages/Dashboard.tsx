@@ -56,6 +56,13 @@ const [recentFiles, setRecentFiles] =
   useEffect(() => {
   if (!activeEngagement) return;
 
+  const token =
+    localStorage.getItem("fraudguard_token");
+
+  if (!token) {
+    console.warn("No JWT token yet");
+    return;
+  }
   const engagementId = activeEngagement.id;
 
   let cancelled = false;

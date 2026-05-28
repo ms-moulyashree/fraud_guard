@@ -25,11 +25,28 @@ export default function Settings({
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+  const token =
+    localStorage.getItem("fraudguard_token");
+
+  // Skip API call if JWT not ready yet
+  if (!token) {
+    console.warn(
+      "No JWT token available for settings"
+    );
+    return;
+  }
+
   api.auth
     .me()
-    .then(console.log)
+    .then((data) => {
+      console.log("User loaded:", data);
+    })
     .catch((err) => {
+      // Prevent logout loop
       if (err instanceof AuthError) {
+        console.warn(
+          "Ignoring auth error inside settings"
+        );
         return;
       }
 
