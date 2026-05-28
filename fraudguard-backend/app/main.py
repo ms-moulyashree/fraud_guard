@@ -22,7 +22,16 @@ from app.config import get_settings
 from app.database import create_pool, close_pool
 
 # ── Import all routers ────────────────────────────────────────────────────────
-from app.routers import auth, engagements, files, procedures, analyses, flags, export
+from app.routers import (
+    auth,
+    engagements,
+    files,
+    procedures,
+    analyses,
+    flags,
+    export,
+)
+
 
 
 # ── Lifespan: pool created once, closed on shutdown ──────────────────────────
@@ -65,6 +74,7 @@ app.include_router(procedures.router,  prefix=PREFIX)
 app.include_router(analyses.router,    prefix=PREFIX)
 app.include_router(flags.router,       prefix=PREFIX)
 app.include_router(export.router,      prefix=PREFIX)
+
 
 
 # ── Health check (used by Docker HEALTHCHECK + load balancers) ────────────────
