@@ -13,7 +13,7 @@ import asyncpg
 
 from app.config import get_settings
 from app.database import get_db
-from app.models.schemas import RegisterRequest, LoginResponse, UserOut
+from app.models.schemas import RegisterRequest, LoginResponse, UserOut, MicrosoftLoginRequest
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
@@ -101,9 +101,19 @@ async def register(body: RegisterRequest, db: asyncpg.Connection = Depends(get_d
         body.job_title, body.tenant_id, pw_hash,
     )
 
-    user = UserOut(id=str(user_id), email=body.email, display_name=body.display_name,
-                   avatar=avatar, job_title=body.job_title, tenant_id=body.tenant_id)
-    return LoginResponse(access_token=_make_token(str(user_id), body.email), user=user)
+    user = UserOut(
+        id=str(user_id),
+        email=body.email,
+        display_name=body.display_name,
+        avatar=avatar,
+        job_title=body.job_title,
+        tenant_id=body.tenant_id,
+    )
+    return LoginResponse(
+        access_token=_make_token(str(user_id), body.email),
+        token_type="bearer",
+        user=user,
+    )
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -127,10 +137,66 @@ async def login(form: OAuth2PasswordRequestForm = Depends(), db: asyncpg.Connect
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     user = UserOut(
-        id=str(row["id"]), email=row["email"], display_name=row["display_name"],
-        avatar=row["avatar"], job_title=row["job_title"] or "", tenant_id=row["tenant_id"] or "",
+        id=str(row["id"]),
+        email=row["email"],
+        display_name=row["display_name"],
+        avatar=row["avatar"],
+        job_title=row["job_title"] or "",
+        tenant_id=row["tenant_id"] or "",
     )
-    return LoginResponse(access_token=_make_token(str(row["id"]), row["email"]), user=user)
+    return LoginResponse(
+        access_token=_make_token(str(row["id"]), row["email"]),
+        token_type="bearer",
+        user=user,
+    )
+
+
+@router.post("/microsoft", response_model=LoginResponse)
+async def microsoft_login(
+    body: MicrosoftLoginRequest,
+    db: asyncpg.Connection = Depends(get_db),
+):
+    # Verify the MS token and get real user info from Graph API
+    import httpx
+    async with httpx.AsyncClient() as client:
+        graph_res = await client.get(
+            "https://graph.microsoft.com/v1.0/me",
+            headers={"Authorization": f"Bearer {body.access_token}"},
+        )
+        if graph_res.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid Microsoft token")
+        graph_user = graph_res.json()
+
+    email = graph_user.get("userPrincipalName") or graph_user.get("mail") or "msuser@example.com"
+    display_name = graph_user.get("displayName") or "Microsoft User"
+    job_title = graph_user.get("jobTitle") or "Auditor"
+    tenant_id = graph_user.get("id") or "microsoft"
+    avatar = "".join(w[0].upper() for w in display_name.split()[:2])
+
+    row = await db.fetchrow("SELECT id, email, display_name, avatar, job_title, tenant_id FROM users WHERE email = $1", email)
+
+    if not row:
+        user_id = uuid.uuid4()
+        await db.execute(
+            """INSERT INTO users (id, email, display_name, avatar, job_title, tenant_id, password_hash)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)""",
+            user_id, email, display_name, avatar, job_title, tenant_id, None,
+        )
+        row = await db.fetchrow("SELECT id, email, display_name, avatar, job_title, tenant_id FROM users WHERE id = $1", user_id)
+
+    user = UserOut(
+        id=str(row["id"]),
+        email=row["email"],
+        display_name=row["display_name"],
+        avatar=row["avatar"],
+        job_title=row["job_title"] or "",
+        tenant_id=row["tenant_id"] or "",
+    )
+    return LoginResponse(
+        access_token=_make_token(str(row["id"]), row["email"]),
+        token_type="bearer",
+        user=user,
+    )
 
 
 @router.get("/me", response_model=UserOut)

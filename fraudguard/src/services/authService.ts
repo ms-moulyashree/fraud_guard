@@ -149,6 +149,7 @@ export async function loginWithMicrosoft(): Promise<void> {
   await msalInstance.loginRedirect({
     ...loginRequest,
     redirectStartPage: window.location.origin + "/",
+    prompt: "select_account"
   });
 }
 
@@ -174,25 +175,26 @@ export async function tryAutoLogin(): Promise<MSUser | null> {
   // 1. Handle Microsoft redirect with #code= in URL
   try {
     const redirectResult = await msalInstance.handleRedirectPromise();
-    if (redirectResult?.account) {
+  if (redirectResult?.account) {
       const user = accountToMSUser(redirectResult.account);
       persistUser(user);
 
-      // Exchange Graph access token for your backend JWT
       try {
-        const graphToken = redirectResult.accessToken;
+        let graphToken = redirectResult.accessToken;
         try {
-  const res = await api.auth.ms365Login(graphToken);
-  saveToken(res.access_token);
-} catch (err) {
-  console.warn("MS365 backend exchange skipped:", err);
-
-  // TEMP FIX:
-  // allow Microsoft login even without backend JWT
-}
+          const fullToken = await msalInstance.acquireTokenSilent({
+            ...graphRequest,
+            account: redirectResult.account,
+          });
+          graphToken = fullToken.accessToken;
+        } catch {
+          // use redirect token as fallback
+        }
+        const res = await api.auth.microsoftLogin(graphToken);
+        saveToken(res.access_token);
+        console.log("Backend JWT created successfully");
       } catch (err) {
-        console.warn("Backend MS365 exchange failed:", err);
-        // Still return user — app can handle token-less state gracefully
+        console.warn("Backend JWT exchange failed:", err);
       }
 
       return user;
@@ -219,10 +221,20 @@ export async function tryAutoLogin(): Promise<MSUser | null> {
   const accounts = msalInstance.getAllAccounts();
   if (accounts.length > 0) {
     try {
-      await msalInstance.acquireTokenSilent({
+      const tokenRes = await msalInstance.acquireTokenSilent({
         ...graphRequest,
         account: accounts[0],
       });
+      // If no backend JWT, exchange MS token for one now
+      if (!getToken()) {
+        try {
+          const res = await api.auth.microsoftLogin(tokenRes.accessToken);
+          saveToken(res.access_token);
+          console.log("Backend JWT refreshed successfully");
+        } catch (err) {
+          console.warn("Backend JWT refresh failed:", err);
+        }
+      }
       return accountToMSUser(accounts[0]);
     } catch {
       // Token expired — fall through
@@ -240,9 +252,17 @@ export async function tryAutoLogin(): Promise<MSUser | null> {
 
   // Restore stored session immediately.
   // JWT may or may not exist yet (MS SSO users can still be valid).
-  if (raw) {
-    return JSON.parse(raw) as MSUser;
-  }
+  const token = getToken();
+
+if (raw && token) {
+  return JSON.parse(raw) as MSUser;
+}
+
+// Session exists but JWT missing
+if (raw && !token) {
+  console.warn("Stored session found but JWT missing");
+  clearUser();
+}
 } catch {
   // Corrupted storage — clear and force re-login.
   clearUser();

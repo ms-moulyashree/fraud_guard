@@ -93,10 +93,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
-  const demoAccounts = [
-    { email: "priya.sharma@company.com", name: "Priya Sharma", role: "Audit Manager",      avatar: "PS" },
-    { email: "rahul.verma@company.com",  name: "Rahul Verma",  role: "Finance Controller", avatar: "RV" },
-  ];
+ 
 
   const anyLoading = loading || !!loadingEmail;
 
@@ -173,54 +170,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             {loading ? "Redirecting to Microsoft..." : "Continue with Microsoft 365"}
           </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-            <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.08)" }} />
-            <span style={{ color: "#6b7280", fontSize: "12px" }}>or select demo account</span>
-            <div style={{ flex: 1, height: "1px", backgroundColor: "rgba(255,255,255,0.08)" }} />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {demoAccounts.map((acc) => (
-              <button
-                key={acc.email}
-                onClick={() => handleDemoLogin(acc.email)}
-                disabled={anyLoading}
-                style={{
-                  width: "100%", display: "flex", alignItems: "center", gap: "12px",
-                  backgroundColor: "rgba(42,42,69,0.6)", border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "10px", padding: "12px 16px",
-                  cursor: anyLoading ? "not-allowed" : "pointer",
-                  opacity: anyLoading ? 0.5 : 1, textAlign: "left", transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => { if (!anyLoading) e.currentTarget.style.backgroundColor = "#32324f"; }}
-                onMouseLeave={(e) => { if (!anyLoading) e.currentTarget.style.backgroundColor = "rgba(42,42,69,0.6)"; }}
-              >
-                <div style={{
-                  width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#2563eb",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "white", fontSize: "11px", fontWeight: 700, flexShrink: 0,
-                }}>
-                  {acc.avatar}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: "white", fontSize: "13px", fontWeight: 600 }}>{acc.name}</div>
-                  <div style={{ color: "#9ca3af", fontSize: "11px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {acc.email} · {acc.role}
-                  </div>
-                </div>
-                {loadingEmail === acc.email ? (
-                  <svg style={{ animation: "spin 1s linear infinite", width: "16px", height: "16px", color: "#60a5fa" }} fill="none" viewBox="0 0 24 24">
-                    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" fill="none" stroke="#6b7280" strokeWidth="2" viewBox="0 0 24 24">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                )}
-              </button>
-            ))}
-          </div>
+         
 
           <p style={{ color: "#4b5563", fontSize: "11px", textAlign: "center", marginTop: "20px", lineHeight: "1.6" }}>
             Microsoft 365 login loads your SharePoint files automatically.

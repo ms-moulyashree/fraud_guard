@@ -10,14 +10,13 @@ export const msalConfig: Configuration = {
     postLogoutRedirectUri: window.location.origin,
   },
   cache: {
-    cacheLocation: "sessionStorage",
+    cacheLocation: "localStorage",
   },
 };
 
 // Minimal scopes at login = fastest popup
 export const loginRequest: PopupRequest = {
   scopes: ["User.Read"],
-  prompt: "select_account",
 };
 
 // Full scopes for Graph API calls after login

@@ -95,18 +95,11 @@ if (res.status === 401) {
     path
   );
 
-  const isAuthEndpoint =
-    path.includes("/auth/");
+  clearToken();
 
-  // ONLY logout for auth endpoints
-  if (isAuthEndpoint) {
-
-    clearToken();
-
-    if (_onUnauthorized) {
-      _onUnauthorized();
-    }
-  }
+if (_onUnauthorized) {
+  _onUnauthorized();
+}
 
   throw new AuthError(
     "Session expired or unauthorized",
@@ -240,48 +233,63 @@ export interface ApiDashboardStats {
 
 export const api = {
   auth: {
-    register: (data: {
-      display_name: string;
-      email: string;
-      password: string;
-      job_title?: string;
-      tenant_id?: string;
-    }) => request<LoginResponse>("POST", "/auth/register", data),
+  register: (data: {
+    display_name: string;
+    email: string;
+    password: string;
+    job_title?: string;
+    tenant_id?: string;
+  }) =>
+    request<LoginResponse>("POST", "/auth/register", data),
 
-    login: async (email: string, password: string): Promise<LoginResponse> => {
-      const form = new FormData();
-      form.append("username", email);
-      form.append("password", password);
-      const res = await request<LoginResponse>("POST", "/auth/login", form, true);
-      saveToken(res.access_token);
-      return res;
-    },
+  login: async (
+    email: string,
+    password: string
+  ): Promise<LoginResponse> => {
 
-    /**
-     * Exchange a Microsoft Graph access token (from MSAL redirect) for a
-     * FraudGuard backend JWT.
-     *
-     * Expects the backend to expose: POST /api/v1/auth/ms365
-     * Body: { access_token: string }
-     * Returns: LoginResponse (same shape as /auth/login)
-     *
-     * saveToken() is called here so the JWT is stored immediately,
-     * consistent with how api.auth.login works.
-     */
-    ms365Login: async (graphAccessToken: string): Promise<LoginResponse> => {
-      const res = await request<LoginResponse>("POST", "/auth/ms365", {
-        access_token: graphAccessToken,
-      });
-      saveToken(res.access_token);
-      return res;
-    },
+    const form = new FormData();
+    form.append("username", email);
+    form.append("password", password);
 
-    me: () => request<ApiUser>("GET", "/auth/me"),
+    const res = await request<LoginResponse>(
+      "POST",
+      "/auth/login",
+      form,
+      true
+    );
 
-    logout: () => {
-      clearToken();
-    },
+    saveToken(res.access_token);
+
+    return res;
   },
+
+  microsoftLogin: async (
+  graphToken: string
+): Promise<LoginResponse> => {
+
+  const res = await request<LoginResponse>(
+    "POST",
+    "/auth/microsoft",
+    {
+      access_token: graphToken,
+    }
+  );
+
+  console.log("MICROSOFT LOGIN RESPONSE:", res);
+
+  saveToken(res.access_token);
+
+  console.log("TOKEN AFTER SAVE:", localStorage.getItem("fraudguard_token"));
+
+  return res;
+},
+
+  me: () => request<ApiUser>("GET", "/auth/me"),
+
+  logout: () => {
+    clearToken();
+  },
+},
 
   // ─── ENGAGEMENTS ───────────────────────────────────────────────────────────
 
@@ -302,6 +310,17 @@ export const api = {
       return request<ApiFile>("POST", "/files/upload", form, true);
     },
     recent: () => request<ApiFile[]>("GET", "/files/recent"),
+    register: (data: {
+      name: string;
+      path: string;
+      source: string;
+      file_type: string;
+      size_label?: string;
+      row_count?: number;
+      column_names?: string[];
+      site_name?: string;
+      engagement_id?: string;
+    }) => request<ApiFile>("POST", "/files/register", data),
   },
 
   // ─── PROCEDURES ────────────────────────────────────────────────────────────

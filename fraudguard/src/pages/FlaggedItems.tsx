@@ -81,8 +81,15 @@ useEffect(() => {
     setError(null);
 
     try {
-      // Load all flags
-      const raw: ApiFlag[] = await api.flags.list();
+      // Filter by the most recent completed analysis so we only show
+      // flags from the uploaded dataset, not leftover demo data
+      const latestRunId = analyses
+        .filter((a) => a.status === "complete")
+        .map((a) => a.id)[0];
+
+      const raw: ApiFlag[] = await api.flags.list(
+        latestRunId ? { run_id: latestRunId } : undefined
+      );
 
       if (!cancelled) {
         setFlags(raw.map(apiFlagToDetail) as ExtendedFlag[]);
@@ -108,17 +115,17 @@ useEffect(() => {
   return () => {
     cancelled = true;
   };
-}, []);
+}, [analyses]);
   // ── Auditor action update ──────────────────────────────────────────────────
   async function handleAuditorAction(flagId: string, action: string) {
     setUpdatingId(flagId);
     try {
       const updated = await api.flags.update(flagId, { auditor_action: action });
       setFlags((prev) =>
-        prev.map((f) =>
-          f.id === flagId ? { ...f, auditorAction: updated.auditor_action } : f
-        )
-      );
+  prev.map((f) =>
+    f.id === flagId ? { ...f, auditorAction: updated.auditor_action ?? action } : f
+  )
+);
     } catch (err: any) {
       alert("Failed to update flag: " + (err.message ?? "unknown error"));
     } finally {
@@ -402,7 +409,7 @@ useEffect(() => {
                             disabled={updatingId === flag.id}
                             onClick={() => handleAuditorAction(flag.id, opt)}
                             className={`text-[11px] font-medium px-3 py-1.5 rounded-lg border transition-all ${
-                              flag.auditorAction === opt
+                              flag.auditorAction?.toLowerCase() === opt.toLowerCase()
                                 ? "bg-[#1A1A2E] text-white border-[#1A1A2E]"
                                 : "bg-white text-[#4B4B4B] border-[#E0DDD8] hover:border-[#B8B4AC]"
                             } disabled:opacity-50`}

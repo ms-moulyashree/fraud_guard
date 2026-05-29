@@ -27,7 +27,8 @@ async def create_pool() -> asyncpg.Pool:
         max_size=settings.db_pool_max,
         # Tell asyncpg which search_path to use so every query
         # automatically looks in the fraudguard schema first
-        server_settings={"search_path": "fraudguard,public"},
+        server_settings={"search_path": "public"},
+
     )
     return _pool
 

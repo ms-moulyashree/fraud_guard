@@ -7,12 +7,15 @@ interface SidebarProps {
   setCurrentPage: (page: Page) => void;
   user: MSUser;
   onLogout: () => void;
+  selectedFile: { name: string } | null;
+  flagCount?: number;
 }
 
-const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
+const navItems: { id: Page; label: string; requiresFile: boolean; icon: React.ReactNode }[] = [
   {
     id: "dashboard",
     label: "Dashboard",
+    requiresFile: false,
     icon: (
       <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -25,6 +28,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   {
     id: "procedures",
     label: "Procedures Library",
+    requiresFile: true,
     icon: (
       <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -35,6 +39,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   {
     id: "analyses",
     label: "My Analyses",
+    requiresFile: true,
     icon: (
       <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <line x1="18" y1="20" x2="18" y2="10" />
@@ -46,6 +51,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   {
     id: "flagged",
     label: "Flagged Items",
+    requiresFile: true,
     icon: (
       <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
@@ -56,6 +62,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   {
     id: "settings",
     label: "Settings",
+    requiresFile: false,
     icon: (
       <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3" />
@@ -65,13 +72,14 @@ const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-export default function Sidebar({ currentPage, setCurrentPage, user, onLogout }: SidebarProps) {
+export default function Sidebar({ currentPage, setCurrentPage, user, onLogout, selectedFile, flagCount = 0 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [tooltip, setTooltip] = useState<string | null>(null);
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    await onLogout(); // clears session + navigates to login
+    await onLogout();
   };
 
   return (
@@ -97,33 +105,59 @@ export default function Sidebar({ currentPage, setCurrentPage, user, onLogout }:
 
       {/* NAV */}
       <nav className="flex-1 py-3 px-2 overflow-y-auto">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setCurrentPage(item.id)}
-            className={`w-full text-left px-3 py-2 rounded-lg mb-1 flex items-center ${
-              collapsed ? "justify-center" : "gap-3"
-            } text-[13px] transition-all duration-150 ${
-              currentPage === item.id
-                ? "bg-blue-50 text-blue-600 font-medium"
-                : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
-            }`}
-          >
-            <span className={currentPage === item.id ? "text-blue-600" : "text-gray-400"}>
-              {item.icon}
-            </span>
-            {!collapsed && (
-              <>
-                <span>{item.label}</span>
-                {item.id === "flagged" && (
-                  <span className="ml-auto bg-red-100 text-red-600 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
-                    10
-                  </span>
+        {navItems.map((item) => {
+          const locked = item.requiresFile && !selectedFile;
+          const isActive = currentPage === item.id;
+
+          return (
+            <div key={item.id} className="relative">
+              <button
+                onClick={() => {
+                  if (!locked) setCurrentPage(item.id);
+                }}
+                onMouseEnter={() => locked ? setTooltip(item.id) : null}
+                onMouseLeave={() => setTooltip(null)}
+                disabled={locked}
+                className={`w-full text-left px-3 py-2 rounded-lg mb-1 flex items-center ${
+                  collapsed ? "justify-center" : "gap-3"
+                } text-[13px] transition-all duration-150 ${
+                  locked
+                    ? "text-gray-300 cursor-not-allowed"
+                    : isActive
+                    ? "bg-blue-50 text-blue-600 font-medium"
+                    : "text-gray-500 hover:text-gray-800 hover:bg-gray-50"
+                }`}
+              >
+                <span className={locked ? "text-gray-300" : isActive ? "text-blue-600" : "text-gray-400"}>
+                  {item.icon}
+                </span>
+                {!collapsed && (
+                  <>
+                    <span className="flex-1">{item.label}</span>
+                    {item.id === "flagged" && !locked && flagCount > 0 && (
+                      <span className="ml-auto bg-red-100 text-red-600 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                        {flagCount}
+                      </span>
+                    )}
+                    {locked && (
+                      <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-300 shrink-0">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </button>
-        ))}
+              </button>
+
+              {/* Tooltip on hover when locked */}
+              {tooltip === item.id && locked && !collapsed && (
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 bg-gray-800 text-white text-[11px] px-2 py-1 rounded whitespace-nowrap z-50 pointer-events-none">
+                  Select a file first
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* USER + LOGOUT */}
@@ -142,7 +176,6 @@ export default function Sidebar({ currentPage, setCurrentPage, user, onLogout }:
           )}
         </div>
 
-        {/* LOGOUT BUTTON */}
         <button
           onClick={handleLogout}
           disabled={loggingOut}
@@ -151,7 +184,6 @@ export default function Sidebar({ currentPage, setCurrentPage, user, onLogout }:
             collapsed ? "justify-center px-0" : "gap-2 px-3"
           } py-2 rounded-lg text-[12px] font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50`}
         >
-          {/* Logout icon */}
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="shrink-0">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />

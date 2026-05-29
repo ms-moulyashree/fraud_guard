@@ -76,10 +76,16 @@ class FileItemOut(BaseModel):
     id: str
     name: str
     path: str
+    source: str = "local"
+    file_type: str = ""
     size: Optional[str] = None
+    size_label: Optional[str] = None
     modified: Optional[str] = None
+    uploaded_at: Optional[str] = None
     row_count: Optional[int] = None
     columns: list[str] = []
+    column_names: Optional[list[str]] = None
+    site_name: Optional[str] = None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -158,3 +164,14 @@ class DashboardStats(BaseModel):
     total_flags: int
     high_risk: int
     files_analysed: int
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MICROSOFT AUTH
+# ══════════════════════════════════════════════════════════════════════════════
+
+class MicrosoftLoginRequest(BaseModel):
+    access_token: str
+    email: Optional[str] = None
+    display_name: Optional[str] = None
+    job_title: Optional[str] = None
+    tenant_id: Optional[str] = None

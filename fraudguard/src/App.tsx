@@ -35,6 +35,7 @@ export interface SelectedFile {
   columns: string[];
   rowCount: number;
   size: string;
+  fileObject?: File;
 }
 
 export interface AnalysisRun {
@@ -446,6 +447,8 @@ if (token) {
           setCurrentPage={setCurrentPage}
           user={user}
           onLogout={handleLogout}
+          selectedFile={selectedFile}
+          flagCount={analyses.reduce((acc, a) => acc + a.procedures.reduce((s, p) => s + p.flagCount, 0), 0)}
         />
 
         <main className="flex-1 overflow-hidden flex flex-col">
@@ -468,16 +471,18 @@ if (token) {
               setCurrentPage={setCurrentPage}
               setAnalyses={setAnalyses}
               setActiveAnalysis={setActiveAnalysis}
+              activeEngagement={activeEngagement}
             />
           )}
 
           {currentPage === "analyses" && (
-            <MyAnalyses
-              analyses={analyses}
-              activeAnalysis={activeAnalysis}
-              setActiveAnalysis={setActiveAnalysis}
-            />
-          )}
+    <MyAnalyses
+      analyses={analyses}
+      activeAnalysis={activeAnalysis}
+      setActiveAnalysis={setActiveAnalysis}
+      setAnalyses={setAnalyses}
+    />
+  )}
 
           {currentPage === "flagged" && (
             <FlaggedItems analyses={analyses} />
